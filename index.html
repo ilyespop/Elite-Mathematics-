@@ -1,156 +1,156 @@
-<!DOCTYPE html><html lang="ar">
+<!DOCTYPE html>
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة ورسوم بيانية</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #333;
-            text-align: center;
-            padding: 50px;
-            color: white;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 400px;
-            margin: auto;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-            color: black;
-        }
-        input, button {
-            width: 90%;
-            margin: 10px;
-            padding: 15px;
-            font-size: 16px;
-        }
-        button {
-            cursor: pointer;
-        }
-        .calculator, .graphing {
-            display: none;
-        }
-        #register-link {
-            font-size: 12px;
-            cursor: pointer;
-            color: blue;
-        }
-        canvas {
-            background: white;
-        }
-        #register-container button {
-            font-size: 20px;
-            padding: 15px 25px;
-            background-color: blue;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>رسم دوال متعددة</title>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      padding: 40px;
+      direction: rtl;
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    input {
+      padding: 10px;
+      width: 250px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #plot {
+      margin-top: 40px;
+      direction: ltr;
+    }
+  </style>
 </head>
 <body>
-    <div class="container" id="login-container">
-        <h2>تسجيل الدخول</h2>
-        <input type="text" id="username" placeholder="اسم المستخدم" required>
-        <input type="password" id="password" placeholder="كلمة المرور" required>
-        <button onclick="login()">تسجيل الدخول</button>
-        <p id="register-link" onclick="showRegister()">إنشاء حساب</p>
-    </div><div class="container" id="register-container" style="display: none;">
-    <h2>إنشاء حساب</h2>
-    <input type="text" id="new-username" placeholder="اسم المستخدم" required>
-    <input type="password" id="new-password" placeholder="كلمة المرور" required>
-    <button onclick="register()">إنشاء حساب</button>
-</div>
 
-<div class="container" id="choice-container" style="display: none;">
-    <h2>مرحبًا <span id="user-name"></span></h2>
-    <button onclick="showCalculator()">الآلة الحاسبة</button>
-    <button onclick="showGraphing()">إنشاء دالة</button>
-    <button onclick="logout()">تسجيل الخروج</button>
-</div>
+  <h2>أدخل دوال رياضية (x فقط) </h2>
 
-<div class="container calculator" id="calculator-container">
-    <h2>الآلة الحاسبة</h2>
-    <input type="text" id="calc-display" disabled>
-    <div>
-        <button onclick="clearDisplay()">C</button>
-        <button onclick="appendToDisplay('1')">1</button>
-        <button onclick="appendToDisplay('2')">2</button>
-        <button onclick="appendToDisplay('+')">+</button>
-    </div>
-    <div>        <button onclick="appendToDisplay('3')">3</button>
-        <button onclick="appendToDisplay('4')">4</button>
-        <button onclick="appendToDisplay('5')">5</button>
-        <button onclick="appendToDisplay('-')">-</button>
-    </div>
-    <div>
-        <button onclick="calculate()">=</button>
-    </div>
-</div>
+  <div id="inputs" class="input-group">
+    <input type="text" placeholder="مثلاً: x^2" class="fn-input">
+    <input type="text" placeholder="مثلاً: sin(x)" class="fn-input">
+  </div>
 
-<div class="container graphing" id="graphing-container">
-    <h2>إنشاء دالة</h2>
-    <input type="text" id="function-input" placeholder="مثال: x*x" required>
-    <button onclick="plotFunction()">رسم الدالة</button>
-    <canvas id="graphCanvas" width="500" height="500"></canvas>
-</div>
+  <button onclick="addInput()">+ أضف دالة</button>
+  <button onclick="plotFunctions()">إنشاء</button>
 
-<script>
-    function register() {
-        let username = document.getElementById("new-username").value;
-        let password = document.getElementById("new-password").value;
-        if (username.length > 2 && password.length > 7) {
-            localStorage.setItem(username, JSON.stringify({ password: password }));
-            sessionStorage.setItem("loggedUser", username);
-            showChoice(username);
-        } else {
-            alert("يجب أن يكون الاسم وكلمة المرور أكثر من حرفين");
+  <div id="plot"></div>
+
+  <script>
+    function addInput() {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'دالة إضافية...';
+      input.className = 'fn-input';
+      document.getElementById('inputs').appendChild(input);
+    }
+
+    function plotFunctions() {
+      const inputs = Array.from(document.getElementsByClassName('fn-input'));
+      const functions = inputs.map(i => i.value.trim()).filter(f => f !== '');
+
+      if (functions.includes("2006")) {
+        window.location.href = "https://www.instagram.com/dou_dou.06?igsh=MW9vajloaHRjdzVndA=="; // غيّر هذا الرابط
+        return;
+      }
+
+      const xValues = Array.from({ length: 401 }, (_, i) => -10 + i * 0.05);
+      const traces = [];
+      const yAll = [];
+
+      functions.forEach((fn, index) => {
+        try {
+          const parsedFn = math.compile(fn.replace(/\^/g, '**'));
+          const yValues = xValues.map(x => {
+            try {
+              return parsedFn.evaluate({ x });
+            } catch {
+              return NaN;
+            }
+          });
+          yAll.push(yValues);
+
+          traces.push({
+            x: xValues,
+            y: yValues,
+            mode: 'lines',
+            name: fn,
+            line: { width: 2 }
+          });
+        } catch {
+          alert(`خطأ في الدالة: ${fn}`);
         }
-    }
+      });
 
-    function login() {
-        let username = document.getElementById("username").value;
-        let password = document.getElementById("password").value;
-        let userData = JSON.parse(localStorage.getItem(username));
-        if (userData && userData.password === password) {
-            sessionStorage.setItem("loggedUser", username);
-            showChoice(username);
-        } else {
-            alert("بيانات غير صحيحة");
+      // التقاطعات (تقريبية)
+      const intersections = [];
+      for (let i = 0; i < yAll.length; i++) {
+        for (let j = i + 1; j < yAll.length; j++) {
+          for (let k = 0; k < xValues.length; k++) {
+            const y1 = yAll[i][k];
+            const y2 = yAll[j][k];
+            if (isFinite(y1) && isFinite(y2) && Math.abs(y1 - y2) < 0.05) {
+              intersections.push({ x: xValues[k], y: (y1 + y2) / 2 });
+            }
+          }
         }
-    }
+      }
 
-    function showRegister() {
-        document.getElementById("login-container").style.display = "none";
-        document.getElementById("register-container").style.display = "block";
-    }
+      if (intersections.length) {
+        traces.push({
+          x: intersections.map(p => p.x),
+          y: intersections.map(p => p.y),
+          mode: 'markers',
+          name: 'نقاط التقاطع',
+          marker: { color: 'red', size: 8 }
+        });
+      }
 
-    function showChoice(username) {
-        document.getElementById("login-container").style.display = "none";
-        document.getElementById("register-container").style.display = "none";
-        document.getElementById("choice-container").style.display = "block";
-        document.getElementById("user-name").innerText = username;
+      Plotly.newPlot('plot', traces, {
+        title: 'رسم دوال متعددة',
+        xaxis: { title: 'x' },
+        yaxis: { title: 'y' }
+      });
     }
-
-    function logout() {
-        sessionStorage.removeItem("loggedUser");
-        location.reload();
-    }
-
-    function showCalculator() {
-        document.getElementById("calculator-container").style.display = "block";
-        document.getElementById("graphing-container").style.display = "none";
-    }
-
-    function showGraphing() {
-        document.getElementById("calculator-container").style.display = "none";
-        document.getElementById("graphing-container").style.display = "block";
-    }
-</script>
+  </script>
 
 </body>
-</html>
+</html> 
